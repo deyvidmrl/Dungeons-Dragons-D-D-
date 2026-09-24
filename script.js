@@ -3,7 +3,7 @@ const CONFIG = {
     yesText: "Com certeza! ⚔️",
     noText: "Não vou poder 😭",
     successMessage: "Excelente! Prepare sua ficha e os dados críticos! 🎲✨",
-    escapeDistance: 110, // Distância em pixels para o botão começar a fugir
+    escapeDistance: 90, // Distância em pixels para o botão comecar a fugir
     enableCounter: true
 };
 
@@ -25,23 +25,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let escapeCount = 0;
     let isTransitioned = false;
-    let isAbsoluteSet = false;
-
-    // Transforma o botão em absolute na primeira vez que ele foge para soltá-lo do card
-    function makeAbsoluteIfNeeded() {
-        if (!isAbsoluteSet) {
-            const rect = noBtn.getBoundingClientRect();
-            noBtn.style.position = 'absolute';
-            noBtn.style.left = `${rect.left}px`;
-            noBtn.style.top = `${rect.top}px`;
-            isAbsoluteSet = true;
-        }
-    }
+    
+    // Posição atual acumulada do botão em relação ao seu sítio original
+    let currentX = 0;
+    let currentY = 0;
 
     function moveButton(mouseX, mouseY) {
         if (isTransitioned) return;
-
-        makeAbsoluteIfNeeded();
 
         const rect = noBtn.getBoundingClientRect();
         const btnCenterX = rect.left + rect.width / 2;
@@ -55,48 +45,38 @@ document.addEventListener('DOMContentLoaded', () => {
             escapeCount++;
             escapeCountSpan.textContent = escapeCount;
 
-            // Calcula nova posição aleatória segura dentro da tela visível
-            const margin = 30;
-            const maxX = window.innerWidth - rect.width - margin;
-            const maxY = window.innerHeight - rect.height - margin;
-            const minX = margin;
-            const minY = margin;
+            // Direção de fuga baseada na posição do rato/toque
+            const angle = Math.atan2(distY, distX);
+            const moveDistance = 80 + Math.random() * 40;
 
-            let newX = margin + Math.random() * (maxX - minX);
-            let newY = margin + Math.random() * (maxY - minY);
+            currentX += Math.cos(angle) * moveDistance;
+            currentY += Math.sin(angle) * moveDistance;
 
-            // Garante que ele não caia em cima do card central principal
-            const cardRect = mainCard.getBoundingClientRect();
-            if (
-                newX + rect.width > cardRect.left - 20 &&
-                newX < cardRect.right + 20 &&
-                newY + rect.height > cardRect.top - 20 &&
-                newY < cardRect.bottom + 20
-            ) {
-                // Se cair muito perto do centro, joga para as bordas externas
-                newX = Math.random() > 0.5 ? margin : window.innerWidth - rect.width - margin;
-            }
+            // Limites rígidos para garantir que o botão nunca sai do cartão principal
+            const limitX = 110;
+            const limitY = 70;
 
-            noBtn.style.left = `${newX}px`;
-            noBtn.style.top = `${newY}px`;
+            currentX = Math.max(-limitX, Math.min(currentX, limitX));
+            currentY = Math.max(-limitY, Math.min(currentY, limitY));
+
+            noBtn.style.transform = `translate(${currentX}px, ${currentY}px)`;
         }
     }
 
-    // Monitoramento de movimento do mouse
+    // Eventos de movimento do rato e toque em telemóveis
     document.addEventListener('mousemove', (e) => {
         requestAnimationFrame(() => {
             moveButton(e.clientX, e.clientY);
         });
     });
 
-    // Monitoramento para toque em celulares
     noBtn.addEventListener('touchstart', (e) => {
         e.preventDefault();
         const touch = e.touches[0];
         moveButton(touch.clientX, touch.clientY);
     });
 
-    // Ação do botão SIM
+    // Ação ao clicar no SIM
     yesBtn.addEventListener('click', () => {
         if (isTransitioned) return;
         isTransitioned = true;
