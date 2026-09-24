@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sessão de D&D 🎲</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <main class="card-container" id="mainCard">
+        <div class="heart-icon">🐉</div>
+        <h1 id="questionText">Você vai no RPG de D&D sexta?</h1>
+        
+        <div class="counter-box" id="counterBox" aria-live="polite">
+            Tentativas de fugir da mesa: <span id="escapeCount">0</span> 🧙‍♂️
+        </div>
+
+        <div class="buttons-wrapper" id="buttonsWrapper">
+            <button id="yesBtn" class="btn btn-yes">Com certeza! ⚔️</button>
+            <button id="noBtn" class="btn btn-no">Não vou poder 😭</button>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
