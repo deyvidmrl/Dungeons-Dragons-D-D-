@@ -100,9 +100,10 @@ h1 {
 .btn-no {
     background-color: var(--secondary-color);
     color: white;
+    /* Começa no fluxo normal e passa a fixed via JS ao mover */
     position: relative;
-    /* Transição fluida para o movimento dinâmico */
-    transition: transform 0.1s ease-out;
+    z-index: 100;
+    transition: background-color 0.2s ease;
 }
 
 .btn-no:hover {
