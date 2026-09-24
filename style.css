@@ -100,9 +100,9 @@ h1 {
 .btn-no {
     background-color: var(--secondary-color);
     color: white;
-    /* Começa no fluxo normal e muda para absolute inteligente via JS */
     position: relative;
-    transition: left 0.15s ease-out, top 0.15s ease-out;
+    /* Transição fluida para o movimento dinâmico */
+    transition: transform 0.1s ease-out;
 }
 
 .btn-no:hover {
