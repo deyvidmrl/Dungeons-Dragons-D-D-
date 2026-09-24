@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pergunta Especial ❤️</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts para excelente tipografia -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <main class="card-container" id="mainCard">
+        <div class="heart-icon">💖</div>
+        <h1 id="questionText">Você quer sair comigo este fim de semana?</h1>
+        
+        <div class="counter-box" id="counterBox" aria-live="polite">
+            Tentativas de fuga do NÃO: <span id="escapeCount">0</span> 😂
+        </div>
+
+        <div class="buttons-wrapper">
+            <button id="yesBtn" class="btn btn-yes">SIM ❤️</button>
+            <button id="noBtn" class="btn btn-no">NÃO 😈</button>
+        </div>
+    </main>
+
+    <!-- Canvas para efeito de confetes ao clicar em SIM -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
