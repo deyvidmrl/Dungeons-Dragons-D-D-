@@ -1,278 +1,270 @@
 const CONFIG = {
-    question: "Você vai no RPG de D&D sexta?",
-    yesText: "Com certeza! ⚔️",
-    noText: "Não vou poder 😭",
-    successMessage: "Excelente! Prepare sua ficha e os dados críticos! 🎲✨",
+question: "Você vai no RPG de D&D sexta?",
+yesText: "Com certeza! ⚔️",
+noText: "Não vou poder 😭",
+successMessage: "Excelente! Prepare sua ficha e os dados críticos! 🎲✨",
 
-    // Distância que o mouse precisa chegar do botão para ele fugir
-    escapeDistance: 45,
+```
+// Distância além das bordas do botão.
+// Aumente para fugir mais cedo; diminua para fugir mais tarde.
+escapeDistance: 18,
 
-    enableCounter: true
+enableCounter: true,
+screenPadding: 16,
+maxAttempts: 80
+```
+
 };
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener("DOMContentLoaded", () => {
+const questionText = document.getElementById("questionText");
+const yesBtn = document.getElementById("yesBtn");
+const noBtn = document.getElementById("noBtn");
+const counterBox = document.getElementById("counterBox");
+const escapeCountSpan = document.getElementById("escapeCount");
+const mainCard = document.getElementById("mainCard");
+const buttonsWrapper = document.getElementById("buttonsWrapper");
 
-    const questionText = document.getElementById('questionText');
-    const yesBtn = document.getElementById('yesBtn');
-    const noBtn = document.getElementById('noBtn');
-    const counterBox = document.getElementById('counterBox');
-    const escapeCountSpan = document.getElementById('escapeCount');
-    const mainCard = document.getElementById('mainCard');
+```
+if (
+    !questionText || !yesBtn || !noBtn ||
+    !counterBox || !escapeCountSpan ||
+    !mainCard || !buttonsWrapper
+) {
+    console.error("Não foi possível encontrar todos os elementos do site.");
+    return;
+}
 
-    // ==============================
-    // CONFIGURAÇÃO INICIAL
-    // ==============================
+questionText.textContent = CONFIG.question;
+yesBtn.textContent = CONFIG.yesText;
+noBtn.textContent = CONFIG.noText;
 
-    questionText.textContent = CONFIG.question;
-    yesBtn.textContent = CONFIG.yesText;
-    noBtn.textContent = CONFIG.noText;
+if (!CONFIG.enableCounter) {
+    counterBox.style.display = "none";
+}
 
-    if (!CONFIG.enableCounter) {
-        counterBox.style.display = 'none';
-    }
+let escapeCount = 0;
+let finished = false;
+let isFixed = false;
+let moving = false;
 
-    let escapeCount = 0;
-    let isTransitioned = false;
-    let isFixedSet = false;
+// Guarda a posição do cursor para não fugir repetidamente
+// durante o mesmo movimento.
+let lastPointerX = null;
+let lastPointerY = null;
 
-    // ==============================
-    // TRANSFORMA O BOTÃO EM FIXED
-    // ==============================
+function makeFixed() {
+    if (isFixed) return;
 
-    function makeFixedIfNeeded() {
+    const rect = noBtn.getBoundingClientRect();
 
-        if (!isFixedSet) {
+    noBtn.style.position = "fixed";
+    noBtn.style.left = `${rect.left}px`;
+    noBtn.style.top = `${rect.top}px`;
+    noBtn.style.margin = "0";
 
-            const rect = noBtn.getBoundingClientRect();
+    isFixed = true;
+}
 
-            noBtn.style.position = 'fixed';
-            noBtn.style.left = `${rect.left}px`;
-            noBtn.style.top = `${rect.top}px`;
+function overlaps(a, b) {
+    return (
+        a.left < b.right &&
+        a.right > b.left &&
+        a.top < b.bottom &&
+        a.bottom > b.top
+    );
+}
 
-            isFixedSet = true;
+function getSafePosition() {
+    const rect = noBtn.getBoundingClientRect();
+    const padding = CONFIG.screenPadding;
+
+    const maxX = Math.max(
+        padding,
+        window.innerWidth - rect.width - padding
+    );
+
+    const maxY = Math.max(
+        padding,
+        window.innerHeight - rect.height - padding
+    );
+
+    const card = mainCard.getBoundingClientRect();
+
+    for (let i = 0; i < CONFIG.maxAttempts; i++) {
+        const x = padding + Math.random() * (maxX - padding);
+        const y = padding + Math.random() * (maxY - padding);
+
+        const candidate = {
+            left: x,
+            top: y,
+            right: x + rect.width,
+            bottom: y + rect.height
+        };
+
+        // Mantém o botão fora do cartão principal.
+        if (!overlaps(candidate, card)) {
+            return { x, y };
         }
     }
 
-    // ==============================
-    // MOVIMENTO DO BOTÃO
-    // ==============================
+    // Alternativa segura se não houver espaço suficiente.
+    const candidates = [
+        { x: padding, y: padding },
+        { x: maxX, y: padding },
+        { x: padding, y: maxY },
+        { x: maxX, y: maxY }
+    ];
 
-    function moveButton(mouseX, mouseY) {
+    for (const position of candidates) {
+        const candidate = {
+            left: position.x,
+            top: position.y,
+            right: position.x + rect.width,
+            bottom: position.y + rect.height
+        };
 
-        if (isTransitioned) return;
-
-        const rect = noBtn.getBoundingClientRect();
-
-        /*
-         * Calcula o ponto do botão mais próximo
-         * do mouse.
-         *
-         * Isso é melhor do que calcular a distância
-         * até o centro do botão.
-         */
-
-        const closestX = Math.max(
-            rect.left,
-            Math.min(mouseX, rect.right)
-        );
-
-        const closestY = Math.max(
-            rect.top,
-            Math.min(mouseY, rect.bottom)
-        );
-
-        const distX = mouseX - closestX;
-        const distY = mouseY - closestY;
-
-        const distance = Math.sqrt(
-            distX * distX +
-            distY * distY
-        );
-
-        // Só foge quando o mouse realmente chegar perto
-        if (distance < CONFIG.escapeDistance) {
-
-            // Agora sim transforma em fixed
-            makeFixedIfNeeded();
-
-            // Conta a fuga
-            escapeCount++;
-
-            if (CONFIG.enableCounter) {
-                escapeCountSpan.textContent = escapeCount;
-            }
-
-            // ==============================
-            // LIMITES DA TELA
-            // ==============================
-
-            const padding = 20;
-
-            const minX = padding;
-            const minY = padding;
-
-            const maxX =
-                window.innerWidth -
-                rect.width -
-                padding;
-
-            const maxY =
-                window.innerHeight -
-                rect.height -
-                padding;
-
-            // ==============================
-            // NOVA POSIÇÃO ALEATÓRIA
-            // ==============================
-
-            let randomX = Math.floor(
-                minX +
-                Math.random() * (maxX - minX)
-            );
-
-            let randomY = Math.floor(
-                minY +
-                Math.random() * (maxY - minY)
-            );
-
-            // ==============================
-            // EVITA O CARTÃO PRINCIPAL
-            // ==============================
-
-            const cardRect =
-                mainCard.getBoundingClientRect();
-
-            const overlapsCard =
-                randomX < cardRect.right &&
-                randomX + rect.width > cardRect.left &&
-                randomY < cardRect.bottom &&
-                randomY + rect.height > cardRect.top;
-
-            if (overlapsCard) {
-
-                /*
-                 * Se o botão cair sobre o cartão,
-                 * joga para uma das laterais.
-                 */
-
-                if (
-                    randomX >
-                    window.innerWidth / 2
-                ) {
-
-                    randomX =
-                        window.innerWidth -
-                        rect.width -
-                        padding;
-
-                } else {
-
-                    randomX = padding;
-                }
-            }
-
-            // ==============================
-            // APLICA A POSIÇÃO
-            // ==============================
-
-            noBtn.style.left = `${randomX}px`;
-            noBtn.style.top = `${randomY}px`;
+        if (!overlaps(candidate, card)) {
+            return position;
         }
     }
 
-    // ==============================
-    // MOVIMENTO DO MOUSE
-    // ==============================
+    // Em telas pequenas, prioriza manter o botão visível.
+    return {
+        x: padding,
+        y: maxY
+    };
+}
 
-    document.addEventListener('mousemove', (e) => {
+function moveButton() {
+    if (finished || moving) return;
 
-        requestAnimationFrame(() => {
+    moving = true;
+    makeFixed();
 
-            moveButton(
-                e.clientX,
-                e.clientY
-            );
+    const position = getSafePosition();
 
+    noBtn.style.left = `${position.x}px`;
+    noBtn.style.top = `${position.y}px`;
+
+    escapeCount++;
+
+    if (CONFIG.enableCounter) {
+        escapeCountSpan.textContent = escapeCount;
+    }
+
+    // Evita que o mesmo movimento provoque fugas em sequência.
+    requestAnimationFrame(() => {
+        moving = false;
+    });
+}
+
+function isPointerNearButton(x, y) {
+    const rect = noBtn.getBoundingClientRect();
+    const distance = CONFIG.escapeDistance;
+
+    return (
+        x >= rect.left - distance &&
+        x <= rect.right + distance &&
+        y >= rect.top - distance &&
+        y <= rect.bottom + distance
+    );
+}
+
+// Computador: reage apenas quando o cursor entra na área
+// próxima do botão, e não em qualquer lugar da página.
+document.addEventListener("mousemove", (event) => {
+    if (finished || moving) return;
+
+    const x = event.clientX;
+    const y = event.clientY;
+
+    const pointerMoved =
+        lastPointerX === null ||
+        Math.hypot(
+            x - lastPointerX,
+            y - lastPointerY
+        ) > 1;
+
+    lastPointerX = x;
+    lastPointerY = y;
+
+    if (!pointerMoved) return;
+
+    if (isPointerNearButton(x, y)) {
+        moveButton();
+    }
+});
+
+// Celular: ao tocar no botão, ele escapa.
+noBtn.addEventListener("pointerdown", (event) => {
+    if (finished) return;
+
+    if (event.pointerType === "touch") {
+        event.preventDefault();
+        moveButton();
+    }
+});
+
+// Botão SIM.
+yesBtn.addEventListener("click", () => {
+    if (finished) return;
+
+    finished = true;
+
+    noBtn.style.display = "none";
+    yesBtn.style.display = "none";
+    counterBox.style.display = "none";
+
+    questionText.textContent = CONFIG.successMessage;
+
+    mainCard.style.transform = "scale(1.05)";
+
+    setTimeout(() => {
+        mainCard.style.transform = "scale(1)";
+    }, 200);
+
+    if (typeof confetti === "function") {
+        confetti({
+            particleCount: 150,
+            spread: 80,
+            origin: { y: 0.6 },
+            colors: [
+                "#d69e2e",
+                "#e53e3e",
+                "#ecc94b",
+                "#ffffff"
+            ]
         });
+    }
+});
 
-    });
+// Reposiciona o botão caso a janela mude de tamanho.
+window.addEventListener("resize", () => {
+    if (finished || !isFixed) return;
 
-    // ==============================
-    // CELULAR / TOUCH
-    // ==============================
+    const rect = noBtn.getBoundingClientRect();
+    const padding = CONFIG.screenPadding;
 
-    noBtn.addEventListener('touchstart', (e) => {
+    const x = Math.max(
+        padding,
+        Math.min(
+            rect.left,
+            window.innerWidth - rect.width - padding
+        )
+    );
 
-        e.preventDefault();
+    const y = Math.max(
+        padding,
+        Math.min(
+            rect.top,
+            window.innerHeight - rect.height - padding
+        )
+    );
 
-        const touch = e.touches[0];
-
-        moveButton(
-            touch.clientX,
-            touch.clientY
-        );
-
-    });
-
-    // ==============================
-    // BOTÃO SIM
-    // ==============================
-
-    yesBtn.addEventListener('click', () => {
-
-        if (isTransitioned) return;
-
-        isTransitioned = true;
-
-        // Esconde botão NÃO
-        noBtn.style.display = 'none';
-
-        // Altera a pergunta
-        questionText.textContent =
-            CONFIG.successMessage;
-
-        // Esconde contador
-        counterBox.style.display = 'none';
-
-        // Esconde botão SIM
-        yesBtn.style.display = 'none';
-
-        // ==============================
-        // ANIMAÇÃO DO CARTÃO
-        // ==============================
-
-        mainCard.style.transform =
-            'scale(1.05)';
-
-        setTimeout(() => {
-
-            mainCard.style.transform =
-                'scale(1)';
-
-        }, 200);
-
-        // ==============================
-        // CONFETES
-        // ==============================
-
-        if (typeof confetti === 'function') {
-
-            confetti({
-                particleCount: 150,
-                spread: 80,
-                origin: {
-                    y: 0.6
-                },
-                colors: [
-                    '#d69e2e',
-                    '#e53e3e',
-                    '#ecc94b',
-                    '#ffffff'
-                ]
-            });
-
-        }
-
-    });
+    noBtn.style.left = `${x}px`;
+    noBtn.style.top = `${y}px`;
+});
+```
 
 });
