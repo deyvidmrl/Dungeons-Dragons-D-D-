@@ -3,7 +3,7 @@ const CONFIG = {
     yesText: "Com certeza! ⚔️",
     noText: "Não vou poder 😭",
     successMessage: "Excelente! Prepare sua ficha e os dados críticos! 🎲✨",
-    escapeDistance: 90, // Distância em pixels para começar a fugir
+    escapeDistance: 10, // Distância em pixels para começar a fugir
     enableCounter: true
 };
 
